@@ -12,30 +12,43 @@ export function Column({
   onCardDragStart,
   onCardDrop,
   onCardDeleteClick,
+  text,
+  onTextChange,
+  onTextConfirm,
+  onTextCancel,
 }: {
   title?: string
   filterValue?: string
-  cards: {
+  cards?: {
     id: string
     text?: string
   }[]
   onCardDragStart?(cardID: string): void
   onCardDrop?(entered: string | null): void
   onCardDeleteClick?(id: string): void
+  text?: string
+  onTextChange?(value: string): void
+  onTextConfirm?(): void
+  onTextCancel?(): void
 }) {
   const filterValue = rawFilterValue?.trim()
   const keywords = filterValue?.toLowerCase().split(/\s+/g) ?? []
-  const cards = rawCards.filter(({ text }) =>
+  const cards = rawCards?.filter(({ text }) =>
     keywords?.every(w => text?.toLowerCase().includes(w)),
   )
-  const totalCount = rawCards.length
-
-  const [text, setText] = useState('')
+  const totalCount = rawCards?.length ?? -1
 
   const [inputMode, setInputMode] = useState(false)
   const toggleInput = () => setInputMode(v => !v)
-  const confirmInput = () => setText('')
-  const cancelInput = () => setInputMode(false)
+
+  const confirmInput = () => {
+    onTextConfirm?.()
+  }
+
+  const cancelInput = () => {
+    setInputMode(false)
+    onTextCancel?.()
+  }
 
   const [draggingCardID, setDraggingCardID] = useState<string | undefined>(
     undefined,
@@ -48,7 +61,7 @@ export function Column({
   return (
     <Container>
       <Header>
-        <CountBadge>{totalCount}</CountBadge>
+        {totalCount >= 0 && <CountBadge>{totalCount}</CountBadge>}
         <ColumnName>{title}</ColumnName>
 
         <AddButton onClick={toggleInput} />
@@ -57,42 +70,48 @@ export function Column({
       {inputMode && (
         <InputForm
           value={text}
-          onChange={setText}
+          onChange={onTextChange}
           onConfirm={confirmInput}
           onCancel={cancelInput}
         />
       )}
 
-      {filterValue && <ResultCount>{cards.length} results</ResultCount>}
+      {!cards ? (
+        <Loading />
+      ) : (
+        <>
+          {filterValue && <ResultCount>{cards.length} results</ResultCount>}
 
-      <VerticalScroll>
-        {cards.map(({ id, text }, i) => (
-          <Card.DropArea
-            key={id}
-            disabled={
-              draggingCardID !== undefined &&
-              (id === draggingCardID || cards[i - 1]?.id === draggingCardID)
-            }
-            onDrop={() => onCardDrop?.(id)}
-          >
-            <Card
-              text={text}
-              onDragStart={() => handleCardDragStart(id)}
-              onDragEnd={() => setDraggingCardID(undefined)}
-              onDeleteClick={() => onCardDeleteClick?.(id)}
+          <VerticalScroll>
+            {cards.map(({ id, text }, i) => (
+              <Card.DropArea
+                key={id}
+                disabled={
+                  draggingCardID !== undefined &&
+                  (id === draggingCardID || cards[i - 1]?.id === draggingCardID)
+                }
+                onDrop={() => onCardDrop?.(id)}
+              >
+                <Card
+                  text={text}
+                  onDragStart={() => handleCardDragStart(id)}
+                  onDragEnd={() => setDraggingCardID(undefined)}
+                  onDeleteClick={() => onCardDeleteClick?.(id)}
+                />
+              </Card.DropArea>
+            ))}
+
+            <Card.DropArea
+              style={{ height: '100%' }}
+              disabled={
+                draggingCardID !== undefined &&
+                cards[cards.length - 1]?.id === draggingCardID
+              }
+              onDrop={() => onCardDrop?.(null)}
             />
-          </Card.DropArea>
-        ))}
-
-        <Card.DropArea
-          style={{ height: '100%' }}
-          disabled={
-            draggingCardID !== undefined &&
-            cards[cards.length - 1]?.id === draggingCardID
-          }
-          onDrop={() => onCardDrop?.(null)}
-        />
-      </VerticalScroll>
+          </VerticalScroll>
+        </>
+      )}
     </Container>
   )
 }
@@ -148,6 +167,13 @@ const AddButton = styled.button.attrs({
 
 const InputForm = styled(_InputForm)`
   padding: 8px;
+`
+
+const Loading = styled.div.attrs({
+  children: 'Loading...',
+})`
+  padding: 8px;
+  font-size: 14px;
 `
 
 const ResultCount = styled.div`
