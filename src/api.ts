@@ -1,8 +1,11 @@
+export type ColumnID = string & { readonly brand: unique symbol }
+export type CardID = string & { readonly brand: unique symbol }
+
 export type ReqAndRes = {
   'GET /columns': {
     req: null
     res: {
-      id: string
+      id: ColumnID
       title?: string
     }[]
   }
@@ -10,30 +13,37 @@ export type ReqAndRes = {
   'GET /cards': {
     req: null
     res: {
-      id: string
+      id: CardID
       text?: string
     }[]
   }
 
   'POST /cards': {
     req: {
-      id: string
+      id: CardID
       text?: string
     }
     res: {
-      id: string
+      id: CardID
       text?: string
     }
+  }
+
+  'DELETE /cards': {
+    req: {
+      id: CardID
+    }
+    res: []
   }
 
   'GET /cardsOrder': {
     req: null
-    res: Record<string, string>
+    res: Record<string, CardID | ColumnID>
   }
 
   'PATCH /cardsOrder': {
-    req: Record<string, string>
-    res: Record<string, string>
+    req: Record<string, CardID | ColumnID>
+    res: Record<string, CardID | ColumnID>
   }
 }
 
