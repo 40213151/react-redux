@@ -98,19 +98,25 @@ export function App() {
     if (!column) return
 
     const text = column.text
-
     const cardID = randomID()
+
+    const patch = reorderPatch(cardsOrder, cardID, cardsOrder[columnID])
 
     setData(
       produce((draft: State) => {
         const column = draft.columns?.find(c => c.id === columnID)
-        if (!column) return
+        if (!column?.cards) return
 
-        column.cards?.unshift({
+        column.cards.unshift({
           id: cardID,
           text: column.text,
         })
         column.text = ''
+
+        draft.cardsOrder = {
+          ...draft.cardsOrder,
+          ...patch,
+        }
       }),
     )
 
@@ -118,6 +124,7 @@ export function App() {
       id: cardID,
       text,
     })
+    api('PATCH /cardsOrder', patch)
   }
 
   const [deletingCardID, setDeletingCardID] = useState<string | undefined>(
