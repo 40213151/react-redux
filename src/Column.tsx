@@ -5,27 +5,23 @@ import * as color from './color'
 import { Card } from './Card'
 import { PlusIcon } from './icon'
 import { InputForm as _InputForm } from './InputForm'
-import { CardID } from './api'
+import { CardID, ColumnID } from './api'
 
 export function Column({
+  id: columnID,
   title,
   cards: rawCards,
-  onCardDragStart,
-  onCardDrop,
-  onCardDeleteClick,
   text,
   onTextChange,
   onTextConfirm,
   onTextCancel,
 }: {
+  id: ColumnID
   title?: string
   cards?: {
     id: CardID
     text?: string
   }[]
-  onCardDragStart?(cardID: CardID): void
-  onCardDrop?(entered: CardID | null): void
-  onCardDeleteClick?(id: CardID): void
   text?: string
   onTextChange?(value: string): void
   onTextConfirm?(): void
@@ -50,13 +46,11 @@ export function Column({
     onTextCancel?.()
   }
 
-  const [draggingCardID, setDraggingCardID] = useState<CardID | undefined>(
-    undefined,
-  )
   const handleCardDragStart = (cardID: CardID) => {
     setDraggingCardID(cardID)
     onCardDragStart?.(cardID)
   }
+  const draggingCardID = useSelector(state => state.draggingCardID)
 
   return (
     <Container>
@@ -83,31 +77,26 @@ export function Column({
           {filterValue && <ResultCount>{cards.length} results</ResultCount>}
 
           <VerticalScroll>
-            {cards.map(({ id, text }, i) => (
+            {cards.map(({ id }, i) => (
               <Card.DropArea
                 key={id}
+                targetID={id}
                 disabled={
                   draggingCardID !== undefined &&
                   (id === draggingCardID || cards[i - 1]?.id === draggingCardID)
                 }
-                onDrop={() => onCardDrop?.(id)}
               >
-                <Card
-                  text={text}
-                  onDragStart={() => handleCardDragStart(id)}
-                  onDragEnd={() => setDraggingCardID(undefined)}
-                  onDeleteClick={() => onCardDeleteClick?.(id)}
-                />
+                <Card id={id} />
               </Card.DropArea>
             ))}
 
             <Card.DropArea
+              targetID={columnID}
               style={{ height: '100%' }}
               disabled={
                 draggingCardID !== undefined &&
                 cards[cards.length - 1]?.id === draggingCardID
               }
-              onDrop={() => onCardDrop?.(null)}
             />
           </VerticalScroll>
         </>

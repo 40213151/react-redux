@@ -14,13 +14,6 @@ export function App() {
   const cardsOrder = useSelector(state => state.cardsOrder)
 
   const cardIsBeingDeleted = useSelector(state => Boolean(state.deletingCardID))
-  const setDeletingCardID = (cardID: CardID) =>
-    dispatch({
-      type: 'Card.SetDeletingCard',
-      payload: {
-        cardID,
-      },
-    })
   const cancelDelete = () =>
     dispatch({
       type: 'Dialog.CancelDelete',
@@ -53,31 +46,6 @@ export function App() {
   }, [dispatch])
 
   const draggingCardID = useSelector(state => state.draggingCardID)
-  const setDraggingCardID = (cardID: CardID) =>
-    dispatch({
-      type: 'Card.StartDragging',
-      payload: {
-        cardID,
-      },
-    })
-
-  const dropCardTo = (toID: CardID | ColumnID) => {
-    const fromID = draggingCardID
-    if (!fromID) return
-
-    if (fromID === toID) return
-
-    const patch = reorderPatch(cardsOrder, fromID, toID)
-
-    dispatch({
-      type: 'Card.Drop',
-      payload: {
-        toID,
-      },
-    })
-
-    api('PATCH /cardsOrder', patch)
-  }
 
   const setText = (columnID: ColumnID, value: string) => {
     dispatch({
@@ -123,12 +91,10 @@ export function App() {
           ) : (
             columns.map(({ id: columnID, title, cards, text }) => (
               <Column
+                id={columnID}
                 key={columnID}
                 title={title}
                 cards={cards}
-                onCardDragStart={cardID => setDraggingCardID(cardID)}
-                onCardDrop={entered => dropCardTo(entered ?? columnID)}
-                onCardDeleteClick={cardID => setDeletingCardID(cardID)}
                 text={text}
                 onTextChange={value => setText(columnID, value)}
                 onTextConfirm={() => addCard(columnID)}
